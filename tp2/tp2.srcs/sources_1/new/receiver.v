@@ -97,7 +97,7 @@ module receiver
     // idle state
     always @(*) begin
         if (state_reg == idle) begin
-            if (rx == start_bit) begin
+            if (i_rx == start_bit) begin
                 state_next = start;
                 tick_counter_next = 0;
             end
