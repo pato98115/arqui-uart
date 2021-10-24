@@ -1,8 +1,0 @@
-0.7
-2020.2
-Jun 10 2021
-19:45:28
-/home/patricio/Facultad/arqui/practico/arqui-uart/tp2/tp2.sim/sim_1/behav/xsim/glbl.v,1623370582,verilog,,,,glbl,,,,,,,,
-/home/patricio/Facultad/arqui/practico/arqui-uart/tp2/tp2.srcs/sim_1/new/reciever_tb.v,1635049128,verilog,,,,reciever_tb,,,,,,,,
-/home/patricio/Facultad/arqui/practico/arqui-uart/tp2/tp2.srcs/sources_1/new/mod_m_counter.v,1635046128,verilog,,/home/patricio/Facultad/arqui/practico/arqui-uart/tp2/tp2.srcs/sources_1/new/receiver.v,,mod_m_counter,,,,,,,,
-/home/patricio/Facultad/arqui/practico/arqui-uart/tp2/tp2.srcs/sources_1/new/receiver.v,1635048894,verilog,,/home/patricio/Facultad/arqui/practico/arqui-uart/tp2/tp2.srcs/sim_1/new/reciever_tb.v,,receiver,,,,,,,,
