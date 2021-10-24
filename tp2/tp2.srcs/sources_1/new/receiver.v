@@ -48,15 +48,15 @@ module receiver
     localparam start_bit = 1'b0;
     localparam stop_bit  = 1'b1;
 
-    // number of ticks for start reading data
+    // count of ticks for start reading data
     localparam start_sampling_data = 4'd7;
-    // number of ticks for sampling
+    // count of ticks for sampling
     localparam sample_now = 4'd15;
 
     // signals for controlling the behavior of the automata
     reg [3 : 0] state_reg, state_next;
     reg [3 : 0] tick_counter_reg, tick_counter_next;
-    reg [2 : 0] bit_counter_reg, bit_counter_next;
+    reg [3 : 0] bit_counter_reg, bit_counter_next;
 
     // data reciever registers
     reg [DATA_SIZE - 1 : 0] data_reg, data_next;
@@ -145,7 +145,7 @@ module receiver
         end
     end
 
-    // data state
+    // stop state
     always @(*) begin
         if (state_reg == stop) begin
             if (i_boud_tick) begin

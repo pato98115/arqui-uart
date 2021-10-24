@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 10/24/2021 12:36:18 AM
+// Create Date: 10/24/2021 06:02:30 PM
 // Design Name: 
-// Module Name: reciever_tb
+// Module Name: transmitter_tb
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,20 +20,20 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module reciever_tb;
+module transmitter_tb;
     // period
     localparam T = 10;
 
     localparam DATA_SIZE = 8;
     localparam SB_TICKS = 16;
 
-    // regs for instanciating the reciever
+    // regs for instanciating the transmitter
     reg clk, reset;
-    reg rx, tick;
-    wire [DATA_SIZE - 1: 0] data;
-    wire done;
+    reg tx_start, tick;
+    reg [DATA_SIZE - 1: 0] data;
+    wire tx_done, tx;
 
-    receiver
+    transmitter
     #
     (
         .DATA_SIZE(DATA_SIZE),
@@ -42,10 +42,11 @@ module reciever_tb;
     (
         .i_clk(clk),
         .i_reset(reset),
-        .i_rx(rx),
+        .i_start(tx_start),
         .i_boud_tick(tick),
-        .o_rx_done_tick(done),
-        .o_data(data)
+        .i_data(data),
+        .o_tx_done_tick(tx_done),
+        .o_tx(tx)
     );
 
     always #(T/2) clk = ~clk;
@@ -56,36 +57,24 @@ module reciever_tb;
         #T
         tick = 0;
     end
-    
+
     initial begin
         // init regs
         clk = 0;
+        tx_start = 0;
         reset = 1;
         #(10*T)
         reset = 0;
         #(10*T)
         // start test
-        rx = 1;
-        #(163*16*T)
-        rx = 0;
-        #(163*16*T)
-        rx = 1;
-        #(163*16*T)
-        rx = 1;
-        #(163*16*T)
-        rx = 1;
-        #(163*16*T)
-        rx = 1;
-        #(163*16*T)
-        rx = 0;
-        #(163*16*T)
-        rx = 0;
-        #(163*16*T)
-        rx = 0;
-        #(163*16*T)
-        rx = 1;
-        #(163*16*T)
-        rx = 1;
+        data = 8'b00001111;
+        #(10*T)
+        tx_start = 1;
+        #(40*T)
+        tx_start = 0;
+        // long wait 
+        #(163*16*10*T)
+        reset = 0;
     end
-    
+
 endmodule
