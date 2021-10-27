@@ -85,88 +85,76 @@ module receiver
 
     // next state logic
 
-    // init next registers
     always @(*) begin
-        state_next <= state_reg; 
-        tick_counter_next <= tick_counter_reg;
-        bit_counter_next <= bit_counter_reg;
-        data_next <= data_reg;
-        rx_done_next <= 1'b0;
-    end
+        // init next registers
+        state_next = state_reg; 
+        tick_counter_next = tick_counter_reg;
+        bit_counter_next = bit_counter_reg;
+        data_next = data_reg;
+        rx_done_next = 1'b0;
 
-    // idle state
-    always @(*) begin
-        if (state_reg == idle) begin
-            if (i_rx == start_bit) begin
-                state_next = start;
-                tick_counter_next = 0;
-            end
-        end
-    end
+        case (state_reg)
 
-    // start state
-    always @(*) begin
-        if (state_reg == start) begin
-            if (i_boud_tick) begin
-                if (tick_counter_reg == start_sampling_data) begin
-                    state_next = data;
+            idle: begin
+                if (i_rx == start_bit) begin
+                    state_next = start;
                     tick_counter_next = 0;
-                    bit_counter_next = 0;
-                end
-                else begin
-                    tick_counter_next = tick_counter_reg + 1;
                 end
             end
-        end
-    end
 
-    // data state
-    always @(*) begin
-        if (state_reg == data) begin
-            if (i_boud_tick) begin
-                if (tick_counter_reg == sample_now) begin
-                    tick_counter_next = 0;
-                    // shift register (shift to rigth)
-                    // LSB is recieved first
-                    data_next = {i_rx, data_reg[DATA_SIZE - 1 : 1]};
-                    if (bit_counter_reg == (DATA_SIZE - 1)) begin
-                        // reach the last bit of data
-                        state_next = stop; 
+            start: begin
+                if (i_boud_tick) begin
+                    if (tick_counter_reg == start_sampling_data) begin
+                        state_next = data;
+                        tick_counter_next = 0;
+                        bit_counter_next = 0;
                     end
                     else begin
-                        // keep reading
-                        bit_counter_next = bit_counter_reg + 1;
+                        tick_counter_next = tick_counter_reg + 1;
                     end
                 end
-                else begin
-                    tick_counter_next = tick_counter_reg + 1;
+            end
+
+            data: begin
+                if (i_boud_tick) begin
+                    if (tick_counter_reg == sample_now) begin
+                        tick_counter_next = 0;
+                        // shift register (shift to rigth)
+                        // LSB is recieved first
+                        data_next = {i_rx, data_reg[DATA_SIZE - 1 : 1]};
+                        if (bit_counter_reg == (DATA_SIZE - 1)) begin
+                            // reach the last bit of data
+                            state_next = stop; 
+                        end
+                        else begin
+                            // keep reading
+                            bit_counter_next = bit_counter_reg + 1;
+                        end
+                    end
+                    else begin
+                        tick_counter_next = tick_counter_reg + 1;
+                    end
                 end
             end
-        end
-    end
 
-    // stop state
-    always @(*) begin
-        if (state_reg == stop) begin
-            if (i_boud_tick) begin
-                if (tick_counter_reg == (SB_TICKS - 1)) begin
-                    // done with stop
-                    state_next = idle;
-                    // data ready to be read
-                    rx_done_next = 1'b1;
-                end
-                else begin
-                    tick_counter_next = tick_counter_reg + 1;
+            stop: begin
+                if (i_boud_tick) begin
+                    if (tick_counter_reg == (SB_TICKS - 1)) begin
+                        // done with stop
+                        state_next = idle;
+                        // data ready to be read
+                        rx_done_next = 1'b1;
+                    end
+                    else begin
+                        tick_counter_next = tick_counter_reg + 1;
+                    end
                 end
             end
-        end
-    end
 
-    // handle invalid state
-    always @(*) begin
-        if (state_reg != idle && state_reg != start && state_reg != data && state_reg != stop) begin
-            state_next = idle;   
-        end
+            default: begin
+                state_next = idle;
+            end
+        endcase
     end
 
     // OUTPUTS

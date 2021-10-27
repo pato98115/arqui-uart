@@ -90,76 +90,67 @@ module transmitter
 
     // next state logic
 
-    // init next registers
     always @(*) begin
-        state_next <= state_reg; 
-        tick_counter_next <= tick_counter_reg;
-        bit_counter_next <= bit_counter_reg;
-        frame_next <= frame_reg;
+        // init next registers
+        state_next = state_reg; 
+        tick_counter_next = tick_counter_reg;
+        bit_counter_next = bit_counter_reg;
+        frame_next = frame_reg;
         tx_next = tx_reg;
-        tx_done_next <= 1'b0;
-    end
+        tx_done_next = 1'b0;
+        
+        case (state_reg)
 
-    // idle state
-    always @(*) begin
-        if (state_reg == idle) begin
-            tx_next = stop_bit;
-            if (i_start) begin
-                state_next = sending;
-                tick_counter_next = 0;
-                // build extended frame
-                frame_next = {i_data, start_bit};
-            end
-        end
-    end
-
-    // sending state
-    always @(*) begin
-        if (state_reg == sending) begin
-            // set bit to be send
-            tx_next = frame_reg[0];
-            if (i_boud_tick) begin
-                if (tick_counter_reg == update_tx) begin
+            idle: begin
+                tx_next = stop_bit;
+                if(i_start) begin
+                    state_next = sending;
                     tick_counter_next = 0;
-                    // rigth shift, MSB is the last send
-                    frame_next = frame_reg >> 1;
-                    if (bit_counter_reg == (ext_frame_size - 1)) begin
-                        state_next = stop;
+                    // build extended frame
+                    frame_next = {i_data, start_bit};
+                end
+            end
+
+            sending: begin
+                // set bit to be send
+                tx_next = frame_reg[0];
+                if (i_boud_tick) begin
+                    if (tick_counter_reg == update_tx) begin
+                        tick_counter_next = 0;
+                        // rigth shift, MSB is the last send
+                        frame_next = frame_reg >> 1;
+                        if (bit_counter_reg == (ext_frame_size - 1)) begin
+                            state_next = stop;
+                        end
+                        else begin
+                            bit_counter_next = bit_counter_reg + 1;
+                        end
                     end
                     else begin
-                        bit_counter_next = bit_counter_reg + 1;
+                        tick_counter_next = tick_counter_reg + 1;
                     end
                 end
-                else begin
-                    tick_counter_next = tick_counter_reg + 1;
+            end
+
+            stop: begin
+                tx_next = stop_bit;
+                if (i_boud_tick) begin
+                    if (tick_counter_reg == (SB_TICKS - 1)) begin
+                        // done with stop
+                        state_next = idle;
+                        // done with this frame
+                        tx_done_next = 1'b1;
+                    end
+                    else begin
+                        tick_counter_next = tick_counter_reg + 1;
+                    end
                 end
             end
-        end
-    end
 
-    // stop state
-    always @(*) begin
-        if (state_reg == stop) begin
-            tx_next = stop_bit;
-            if (i_boud_tick) begin
-                if (tick_counter_reg == (SB_TICKS - 1)) begin
-                    // done with stop
-                    state_next = idle;
-                    // done with this frame
-                    tx_done_next = 1'b1;
-                end
-                else begin
-                    tick_counter_next = tick_counter_reg + 1;
-                end
+            default: begin
+                state_next = idle;
             end
-        end
-    end
-
-    // handle invalid state
-    always @(*) begin
-        if (state_reg != idle && state_reg != sending && state_reg != stop) begin
-            state_next = idle;   
-        end
+        endcase
     end
 
     // OUTPUTS

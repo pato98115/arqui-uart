@@ -67,7 +67,7 @@ module transmitter_tb;
         reset = 0;
         #(10*T)
         // start test
-        data = 8'b00001111;
+        data = 8'b00010111;
         #(10*T)
         tx_start = 1;
         #(40*T)
