@@ -23,12 +23,13 @@
 module transmitter
 #
 (
-    // UART TRANSMITTER SUPPORTS:
+    // TRANSMITTER SUPPORTS:
     // DATA_SIZE VALUE FROM 6 to 9
-    // SB_TIKS 16 (1 bit), 24 (1,5 bit) OR 32 (2 bit)
+    // STOP_BITS 1 or 2
+    // (does not check for parity)
 
     parameter DATA_SIZE = 8, // data bits
-    parameter SB_TICKS = 16  // ticks for stop bits
+    parameter STOP_BITS = 1  // number of stop bits
 )
 (
     input wire i_clk, i_reset,
@@ -39,11 +40,8 @@ module transmitter
 );
 
     // states alias (4 bits because maybe needs to add a state)
-    localparam idle    = 4'b0001;
-    localparam sending = 4'b0010;
-    // if this uart didn't supports 1,5 stop bit, the extended frame
-    // can be the full frame and stop state would be alse sending state
-    localparam stop    = 4'b0100;
+    localparam idle    = 2'b01;
+    localparam sending = 2'b10;
 
     // semantic bit alias
     localparam start_bit = 1'b0;
@@ -53,10 +51,10 @@ module transmitter
     localparam update_tx = 4'd15;
 
     // extended frame size
-    localparam ext_frame_size = 1 + DATA_SIZE;
+    localparam ext_frame_size = 1 + DATA_SIZE + STOP_BITS;
 
     // signals for controlling the behavior of the automata
-    reg [3 : 0] state_reg, state_next;
+    reg [1 : 0] state_reg, state_next;
     reg [3 : 0] tick_counter_reg, tick_counter_next;
     reg [3 : 0] bit_counter_reg, bit_counter_next;
 
@@ -69,7 +67,7 @@ module transmitter
     // BODY:
 
     // state and data registers
-    always @(posedge i_clk, posedge i_reset) begin
+    always @(posedge i_clk) begin
         if (i_reset) begin
             state_reg <= idle;
             tick_counter_reg <= 0;
@@ -106,8 +104,9 @@ module transmitter
                 if(i_start) begin
                     state_next = sending;
                     tick_counter_next = 0;
+                    bit_counter_next = 0;
                     // build extended frame
-                    frame_next = {i_data, start_bit};
+                    frame_next = { {STOP_BITS {stop_bit}}, i_data, start_bit };
                 end
             end
 
@@ -120,26 +119,12 @@ module transmitter
                         // rigth shift, MSB is the last send
                         frame_next = frame_reg >> 1;
                         if (bit_counter_reg == (ext_frame_size - 1)) begin
-                            state_next = stop;
+                            state_next = idle;
+                            tx_done_next = 1'b1;
                         end
                         else begin
                             bit_counter_next = bit_counter_reg + 1;
                         end
-                    end
-                    else begin
-                        tick_counter_next = tick_counter_reg + 1;
-                    end
-                end
-            end
-
-            stop: begin
-                tx_next = stop_bit;
-                if (i_boud_tick) begin
-                    if (tick_counter_reg == (SB_TICKS - 1)) begin
-                        // done with stop
-                        state_next = idle;
-                        // done with this frame
-                        tx_done_next = 1'b1;
                     end
                     else begin
                         tick_counter_next = tick_counter_reg + 1;

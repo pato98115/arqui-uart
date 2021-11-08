@@ -25,7 +25,8 @@ module reciever_tb;
     localparam T = 10;
 
     localparam DATA_SIZE = 8;
-    localparam SB_TICKS = 16;
+    localparam STOP_BITS = 2;
+    localparam PARITY = 0;
 
     // regs for instanciating the reciever
     reg clk, reset;
@@ -37,7 +38,8 @@ module reciever_tb;
     #
     (
         .DATA_SIZE(DATA_SIZE),
-        .SB_TICKS(SB_TICKS)
+        .STOP_BITS(STOP_BITS),
+        .PARITY(PARITY)
     ) uut
     (
         .i_clk(clk),
@@ -67,7 +69,7 @@ module reciever_tb;
         // start test
         rx = 1;
         #(163*16*T)
-        rx = 0;
+        rx = 0; //start bit
         #(163*16*T)
         rx = 1;
         #(163*16*T)
@@ -82,6 +84,16 @@ module reciever_tb;
         rx = 0;
         #(163*16*T)
         rx = 0;
+        #(163*16*T)
+        rx = 1;
+        #(163*16*T)
+        rx = 1; // parity bit
+        #(163*16*T)
+        rx = 1; // stop bit
+        #(163*16*T)
+        rx = 1;
+        #(163*16*T)
+        rx = 1;
         #(163*16*T)
         rx = 1;
         #(163*16*T)
