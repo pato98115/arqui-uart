@@ -33,8 +33,20 @@ module top
     input wire i_clk, i_reset,
     input wire i_rx,
 
-    output wire o_tx
+    output wire o_tx,
+    output wire o_done
 );
+    
+    wire [DATA_SIZE - 1: 0] alu_result_to_interface_alu_result;
+    
+    wire [DATA_SIZE - 1: 0] interface_data_a_to_alu_a;
+    wire [DATA_SIZE - 1: 0] interface_data_b_to_alu_b;
+    wire [ALU_OPCODE_SIZE - 1: 0] interface_opcode_to_alu_op;
+    wire interface_done_to_uart_tx_start;
+    wire [DATA_SIZE - 1: 0] interface_result_to_uart_tx_bus;
+    
+    wire [DATA_SIZE - 1: 0] uart_rx_bus_to_interface_data;
+    wire uart_rx_done_tick_to_interface_read;
 
     alu
     # 
@@ -42,11 +54,11 @@ module top
         .DATA_SIZE(DATA_SIZE)
     ) alu
     (
-        .i_a(),
-        .i_b(),
-        .i_op(),
+        .i_a(interface_data_a_to_alu_a),
+        .i_b(interface_data_b_to_alu_b),
+        .i_op(interface_opcode_to_alu_op),
 
-        .o_result()
+        .o_result(alu_result_to_interface_alu_result)
     );
 
     alu_interface
@@ -58,15 +70,15 @@ module top
     (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_read(),
-        .i_data(),
-        .i_alu_result(alu.o_result),
+        .i_read(uart_rx_done_tick_to_interface_read),
+        .i_data(uart_rx_bus_to_interface_data),
+        .i_alu_result(alu_result_to_interface_alu_result),
 
-        .o_done(),
-        .o_result(),
-        .o_data_a(alu.i_a),
-        .o_data_b(alu.i_b),
-        .o_opcode(alu.i_op)
+        .o_done(interface_done_to_uart_tx_start),
+        .o_result(interface_result_to_uart_tx_bus),
+        .o_data_a(interface_data_a_to_alu_a),
+        .o_data_b(interface_data_b_to_alu_b),
+        .o_opcode(interface_opcode_to_alu_op)
     );
 
     uart
@@ -80,13 +92,13 @@ module top
         .i_clk(i_clk),
         .i_reset(i_reset),
         .i_rx(i_rx),
-        .i_tx_start(alu_interface.o_done),
-        .i_tx_bus(alu_interface.o_result),
+        .i_tx_start(interface_done_to_uart_tx_start),
+        .i_tx_bus(interface_result_to_uart_tx_bus),
 
         .o_tx(o_tx),
-        .o_rx_bus(alu_interface.i_data),
-        .o_rx_done_tick(alu_interface.i_read),
-        .o_tx_done_tick()
+        .o_rx_bus(uart_rx_bus_to_interface_data),
+        .o_rx_done_tick(uart_rx_done_tick_to_interface_read),
+        .o_tx_done_tick(o_done)
     );
 
 endmodule

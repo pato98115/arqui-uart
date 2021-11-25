@@ -46,6 +46,8 @@ module uart
 );
     localparam CLK_DIV = 163;
     localparam DIV_SIZE = 8;
+    
+    wire tick;
 
     mod_m_counter
     # 
@@ -55,7 +57,9 @@ module uart
     ) boud_rate_generator
     (
         .i_clk(i_clk),
-        .i_reset(i_reset)
+        .i_reset(i_reset),
+        
+        .o_tick(tick)
     );
 
     receiver
@@ -68,7 +72,7 @@ module uart
     (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_boud_tick(boud_rate_generator.o_tick),
+        .i_boud_tick(tick),
         .i_rx(i_rx),
         .o_rx_done_tick(o_rx_done_tick),
         .o_data(o_rx_bus)
@@ -83,7 +87,7 @@ module uart
     (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_boud_tick(boud_rate_generator.o_tick),
+        .i_boud_tick(tick),
         .i_start(i_tx_start),
         .i_data(i_tx_bus),
         .o_tx_done_tick(o_tx_done_tick),

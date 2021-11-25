@@ -41,6 +41,9 @@ module receiver
 );
 
     localparam frame_size = STOP_BITS + PARITY + DATA_SIZE;
+    
+    wire done;
+    wire [frame_size - 1: 0] data;
 
     basic_receiver
     #
@@ -51,7 +54,10 @@ module receiver
         .i_clk(i_clk),
         .i_reset(i_reset),
         .i_rx(i_rx),
-        .i_boud_tick(i_boud_tick)
+        .i_boud_tick(i_boud_tick),
+        
+        .o_rx_done_tick(done),
+        .o_data(data)
     );
 
     uart_reader
@@ -64,8 +70,8 @@ module receiver
     (
         .i_clk(i_clk),
         .i_reset(i_reset),
-        .i_read_now_tick(basic_receiver.o_rx_done_tick),
-        .i_frame(basic_receiver.o_data),
+        .i_read_now_tick(done),
+        .i_frame(data),
         .o_read_done_tick(o_rx_done_tick),
         .o_data(o_data)
     );
